@@ -42,6 +42,13 @@ export default function Home({ user }) {
             },
 
             received(data) {
+                const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+
+                if (currentUser && data.shared_by_id === currentUser.id) {
+                    fetchVideos();
+                    return;
+                }
+
                 toast.info(`${data.shared_by_email} shared: ${data.title}`, {
                     icon: "🚀"
                 });

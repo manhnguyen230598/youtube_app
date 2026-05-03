@@ -4,14 +4,14 @@ class VideoBroadcastJob < ApplicationJob
   def perform(video_id)
     video = Video.includes(:user).find(video_id)
 
-    User.where.not(id: video.user_id).find_each do |user|
-      ActionCable.server.broadcast("notifications:#{user.id}", {
-        message: "New video shared!",
-        title: video.title,
-        url: video.url,
-        shared_by_id: video.user_id,
-        shared_by_email: video.user.email
-      })
-    end
+    ActionCable.server.broadcast("video_shares", {
+      message: "New video shared!",
+      video_id: video.id,
+      title: video.title,
+      url: video.url,
+      shared_by_id: video.user_id,
+      shared_by_email: video.user.email,
+      created_at: video.created_at
+    })
   end
 end

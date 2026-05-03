@@ -14,13 +14,13 @@ export default function Header({ user, onLogout, setUser }) {
                 password
             });
 
-            const { access_token, refresh_token } = response.data;
+            const { access_token, refresh_token , user} = response.data;
 
             localStorage.setItem("token", access_token);
             localStorage.setItem("refresh_token", refresh_token);
-            localStorage.setItem("user_email", email);
+            localStorage.setItem("user", JSON.stringify(user));
 
-            setUser({ email: email });
+            setUser(user);
             alert("Đăng nhập thành công!");
         } catch (error) {
             const errorMsg = error.response?.data?.error || "Sai email hoặc mật khẩu";

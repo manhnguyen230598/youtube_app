@@ -16,7 +16,7 @@ class AuthController < ApplicationController
 
   # LOGIN
   def login
-    user = User.find_by(email: params[:email])
+    user = User.find_by(email: params[:email].to_s.strip.downcase)
 
     if user&.authenticate(params[:password])
       access_token = encode_access_token(user.id)
@@ -27,8 +27,12 @@ class AuthController < ApplicationController
 
       render json: {
         access_token: access_token,
-        refresh_token: refresh_token.token
-      }
+        refresh_token: refresh_token.token,
+        user: {
+          id: user.id,
+          email: user.email
+        }
+      }, status: :ok
     else
       render json: { error: "Invalid email or password" }, status: :unauthorized
     end
@@ -42,7 +46,13 @@ class AuthController < ApplicationController
     if stored_token && stored_token.expires_at > Time.current
       access_token = encode_access_token(stored_token.user_id)
 
-      render json: { access_token: access_token }
+      render json: {
+        access_token: access_token,
+        user: {
+          id: stored_token.user.id,
+          email: stored_token.user.email
+        }
+      }
     else
       render json: { error: "Invalid refresh token" }, status: :unauthorized
     end
