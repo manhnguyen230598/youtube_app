@@ -1,9 +1,0 @@
-one:
-  token: token_one
-  user: one
-  expires_at: <%= 7.days.from_now %>
-
-two:
-  token: token_two
-  user: two
-  expires_at: <%= 7.days.from_now %>
