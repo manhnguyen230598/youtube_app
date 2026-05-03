@@ -2,11 +2,33 @@ class VideosController < ApplicationController
   skip_before_action :authorize_request, only: [:index]
 
   def index
-    videos = Video.includes(:user).order(created_at: :desc)
+    page = params.fetch(:page, 1).to_i
+    page = 1 if page < 1
 
-    render json: videos.as_json(
-      include: { user: { only: [:id, :email] } }
-    )
+    per_page = params.fetch(:per_page, 20).to_i
+    per_page = 20 if per_page < 1
+    per_page = 50 if per_page > 50
+
+    videos = Video
+               .includes(:user)
+               .order(created_at: :desc)
+               .limit(per_page)
+               .offset((page - 1) * per_page)
+
+    render json: {
+      videos: videos.as_json(
+        only: [:id, :title, :url, :description, :created_at],
+        include: {
+          user: {
+            only: [:id, :email]
+          }
+        }
+      ),
+      meta: {
+        page: page,
+        per_page: per_page
+      }
+    }
   end
 
   def create

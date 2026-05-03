@@ -13,19 +13,34 @@ RSpec.describe "Videos API", type: :request do
   end
 
   describe "GET /videos" do
-    it "returns shared videos with user information" do
+    it "returns paginated shared videos with user information" do
       create(:video, title: "Newest Video")
 
-      get "/videos"
+      get "/videos", params: { per_page: 20 }
+
+      expect(response).to have_http_status(:ok)
+  
+      body = JSON.parse(response.body)
+
+      expect(body["videos"]).to be_an(Array)
+      expect(body["videos"].first["title"]).to eq("Newest Video")
+      expect(body["videos"].first["user"]).to be_present
+      expect(body["videos"].first["user"]["email"]).to be_present
+      expect(body["meta"]["page"]).to eq(1)
+      expect(body["meta"]["per_page"]).to eq(20)
+    end
+
+    it "limits per_page to 50" do
+      create_list(:video, 60)
+
+      get "/videos", params: { per_page: 100 }
 
       expect(response).to have_http_status(:ok)
 
       body = JSON.parse(response.body)
 
-      expect(body).to be_an(Array)
-      expect(body.first["title"]).to eq("Newest Video")
-      expect(body.first["user"]).to be_present
-      expect(body.first["user"]["email"]).to be_present
+      expect(body["videos"].length).to eq(50)
+      expect(body["meta"]["per_page"]).to eq(50)
     end
   end
 

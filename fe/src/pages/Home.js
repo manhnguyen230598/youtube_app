@@ -12,8 +12,8 @@ export default function Home({ user }) {
 
     const fetchVideos = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/videos`);
-            setVideos(res.data);
+            const res = await axios.get(`${API_BASE_URL}/videos?per_page=20`);
+            setVideos(Array.isArray(res.data) ? res.data : res.data.videos);
         } catch (err) {
             console.error("Failed to fetch videos", err);
         }
