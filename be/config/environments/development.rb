@@ -72,7 +72,7 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
 
-  config.active_job.queue_adapter = :solid_queue
+  config.active_job.queue_adapter = :sidekiq
 
   config.action_cable.allowed_request_origins = [
     "http://localhost:3000",
@@ -82,4 +82,7 @@ Rails.application.configure do
 
   config.hosts << "backend"
   config.hosts << "host.docker.internal"
+
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug").downcase.to_sym
+  config.active_record.verbose_query_logs = false if ENV["RAILS_LOG_LEVEL"] == "warn"
 end
