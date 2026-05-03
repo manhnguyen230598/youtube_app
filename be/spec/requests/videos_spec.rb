@@ -19,7 +19,7 @@ RSpec.describe "Videos API", type: :request do
       get "/videos", params: { per_page: 20 }
 
       expect(response).to have_http_status(:ok)
-  
+
       body = JSON.parse(response.body)
 
       expect(body["videos"]).to be_an(Array)
