@@ -72,7 +72,7 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
 
-  config.active_job.queue_adapter = :async
+  config.active_job.queue_adapter = :solid_queue
 
   config.action_cable.allowed_request_origins = [
     "http://localhost:3000",

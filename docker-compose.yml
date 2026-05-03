@@ -29,6 +29,7 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: password
       REDIS_URL: redis://redis:6379/0
+      RAILS_MAX_THREADS: 10	
 
   frontend:
     build: ./fe
@@ -42,6 +43,22 @@ services:
       - "3001:3000"
     stdin_open: true
     tty: true
+  worker:
+    build: ./be
+    command: bash -c "bundle exec rails db:prepare && bundle exec rails solid_queue:start"
+    volumes:
+      - ./be:/app
+      - bundle_data:/usr/local/bundle
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_HOST: db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MAX_THREADS: 5
+      JOB_CONCURRENCY: 1
 
 volumes:
   postgres_data:
