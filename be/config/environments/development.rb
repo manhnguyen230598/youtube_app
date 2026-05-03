@@ -79,4 +79,7 @@ Rails.application.configure do
     /http:\/\/localhost:\d+/,
     /chrome-extension:\/\/.*/
   ]
+
+  config.hosts << "backend"
+  config.hosts << "host.docker.internal"
 end
