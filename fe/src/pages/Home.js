@@ -2,47 +2,67 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { createConsumer } from "@rails/actioncable";
 import VideoCard from "../components/VideoCard";
-import { toast } from 'react-toastify'; // Import toast
+import { toast } from "react-toastify";
 
-export default function Home() {
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3000";
+const CABLE_URL = process.env.REACT_APP_CABLE_URL || "ws://localhost:3000/cable";
+
+export default function Home({ user }) {
     const [videos, setVideos] = useState([]);
+
+    const fetchVideos = async () => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/videos`);
+            setVideos(res.data);
+        } catch (err) {
+            console.error("Failed to fetch videos", err);
+        }
+    };
 
     useEffect(() => {
         fetchVideos();
+    }, []);
 
-        // Khởi tạo kết nối Realtime
-        const cable = createConsumer("ws://localhost:3000/cable");
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (!token || !user) {
+            return;
+        }
+
+        const cable = createConsumer(`${CABLE_URL}?token=${encodeURIComponent(token)}`);
 
         const subscription = cable.subscriptions.create("NotificationsChannel", {
+            connected() {
+                console.log("Connected to NotificationsChannel");
+            },
+
+            disconnected() {
+                console.log("Disconnected from NotificationsChannel");
+            },
+
             received(data) {
-                toast.info(`${data.user} vừa chia sẻ: ${data.title}`, {
+                toast.info(`${data.shared_by_email} shared: ${data.title}`, {
                     icon: "🚀"
                 });
 
-                fetchVideos(); // Reload danh sách video
+                fetchVideos();
             }
         });
 
         return () => {
             subscription.unsubscribe();
+            cable.disconnect();
         };
-    }, []);
-
-    const fetchVideos = async () => {
-        try {
-            const res = await axios.get("http://localhost:3000/videos");
-            setVideos(res.data);
-        } catch (err) {
-            console.error("Lỗi lấy danh sách video", err);
-        }
-    };
+    }, [user]);
 
     return (
         <div style={{ padding: 20 }}>
-            <h2 style={{ textAlign: 'center' }}>Danh sách Video</h2>
+            <h2 style={{ textAlign: "center" }}>Shared YouTube Videos</h2>
+
             <div style={styles.grid}>
-                {videos.map(v => (
-                    <VideoCard key={v.id} video={v} />
+                {videos.map((video) => (
+                    <VideoCard key={video.id} video={video} />
                 ))}
             </div>
         </div>

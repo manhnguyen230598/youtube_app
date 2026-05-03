@@ -82,7 +82,7 @@ function App() {
                 </div>
             )}
 
-            {path === "/share" ? <Share /> : <Home />}
+            {path === "/share" ? <Share /> : <Home user={user} />}
         </div>
     );
 }
