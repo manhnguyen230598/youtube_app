@@ -10,24 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_102408) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_114925) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "refresh_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.datetime "expires_at"
-    t.string "token"
+    t.datetime "expires_at", null: false
+    t.string "token", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["token"], name: "index_refresh_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_refresh_tokens_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "email"
-    t.string "password_digest"
+    t.string "email", null: false
+    t.string "password_digest", null: false
     t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   create_table "videos", force: :cascade do |t|
@@ -35,9 +37,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_102408) do
     t.text "description"
     t.integer "dislikes"
     t.integer "likes"
-    t.string "title"
+    t.string "title", null: false
     t.datetime "updated_at", null: false
-    t.string "url"
+    t.string "url", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_videos_on_user_id"
   end
