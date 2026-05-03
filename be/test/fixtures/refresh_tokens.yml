@@ -1,11 +1,9 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  token: MyString
+  token: token_one
   user: one
-  expires_at: 2026-05-03 04:31:59
+  expires_at: <%= 7.days.from_now %>
 
 two:
-  token: MyString
+  token: token_two
   user: two
-  expires_at: 2026-05-03 04:31:59
+  expires_at: <%= 7.days.from_now %>
