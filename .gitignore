@@ -14,3 +14,10 @@ fe/build
 # OS
 .DS_Store
 Thumbs.db
+
+# IDE
+.idea/
+be/.idea/
+
+# Zip files
+*.zip
