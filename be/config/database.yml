@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: <%= ENV['DATABASE_HOST'] || 'localhost' %>
+  username: <%= ENV['DATABASE_USER'] || 'postgres' %>
+  password: <%= ENV['DATABASE_PASSWORD'] || 'password' %>
+  pool: 5
+
+development:
+  <<: *default
+  database: youtube_app_development
+
+test:
+  <<: *default
+  database: youtube_app_test
+
+production:
+  <<: *default
+  database: youtube_app_production
+  username: postgres
+  password: password

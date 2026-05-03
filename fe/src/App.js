@@ -1,0 +1,95 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Home from "./pages/Home";
+import Share from "./pages/Share";
+import Header from "./components/Header";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+function App() {
+    // 1. Khởi tạo từ LocalStorage để hiện email ngay lập tức (nếu có)
+    const [user, setUser] = useState(() => {
+        const savedEmail = localStorage.getItem("user_email");
+        return savedEmail ? { email: savedEmail } : null;
+    });
+
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+
+    useEffect(() => {
+        const verifyUser = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            try {
+                // Gọi API /me để lấy dữ liệu thật từ database
+                const res = await axios.get("http://localhost:3000/me", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                setUser(res.data.user);
+                localStorage.setItem("user_email", res.data.user.email);
+            } catch (error) {
+                console.error("Token invalid or expired");
+                // Nếu token hết hạn hoặc fake, xóa sạch session
+                localStorage.clear();
+                setUser(null);
+            }
+        };
+
+        verifyUser();
+    }, []);
+
+    const onLogoutRequested = () => setShowLogoutConfirm(true);
+
+    const handleLogoutAction = async (allDevices) => {
+        const token = localStorage.getItem("token");
+        try {
+            if (token) {
+                await axios.post("http://localhost:3000/logout",
+                    { current_logout: !allDevices },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+            }
+        } catch (e) {
+            console.error("API Logout error", e);
+        } finally {
+            localStorage.clear();
+            setUser(null);
+            setShowLogoutConfirm(false);
+            window.location = "/";
+        }
+    };
+
+    const path = window.location.pathname;
+
+    return (
+        <div>
+            <Header user={user} onLogout={onLogoutRequested} setUser={setUser} />
+
+            <ToastContainer position="top-right" autoClose={5000} />
+
+            {showLogoutConfirm && (
+                <div style={modalStyles.overlay}>
+                    <div style={modalStyles.modal}>
+                        <h3>Đăng xuất?</h3>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                            <button onClick={() => handleLogoutAction(false)}>Chỉ máy này</button>
+                            <button onClick={() => handleLogoutAction(true)}>Tất cả các máy</button>
+                            <button onClick={() => setShowLogoutConfirm(false)}>Hủy</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {path === "/share" ? <Share /> : <Home />}
+        </div>
+    );
+}
+
+const modalStyles = {
+    overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+    modal: { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', textAlign: 'center' }
+};
+
+export default App;

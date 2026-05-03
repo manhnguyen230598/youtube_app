@@ -1,0 +1,16 @@
+# Rails
+be/log/*
+!be/log/.keep
+be/tmp/*
+!be/tmp/.keep
+be/storage/*
+!be/storage/.keep
+be/config/master.key
+
+# Node
+fe/node_modules
+fe/build
+
+# OS
+.DS_Store
+Thumbs.db
