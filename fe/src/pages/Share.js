@@ -70,6 +70,13 @@ export default function Share() {
                 <button onClick={handleSubmit} style={styles.button}>
                     Share
                 </button>
+
+                <button
+                    onClick={() => (window.location = "/")}
+                    style={styles.secondaryButton}
+                >
+                    Back to Home
+                </button>
             </div>
         </div>
     );
@@ -94,5 +101,11 @@ const styles = {
     button: {
         padding: "10px 20px",
         cursor: "pointer"
+    },
+    secondaryButton: {
+        padding: "8px 16px",
+        cursor: "pointer",
+        backgroundColor: "#eee",
+        border: "1px solid #ccc"
     }
 };
