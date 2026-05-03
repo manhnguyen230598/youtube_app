@@ -7,10 +7,10 @@ RSpec.describe NotificationsChannel, type: :channel do
     stub_connection current_user: user
   end
 
-  it "subscribes to current user's notification stream" do
+  it "subscribes authenticated users to the video_shares stream" do
     subscribe
 
     expect(subscription).to be_confirmed
-    expect(subscription).to have_stream_from("notifications:#{user.id}")
+    expect(subscription).to have_stream_from("video_shares")
   end
 end
