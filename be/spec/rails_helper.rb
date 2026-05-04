@@ -36,6 +36,11 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
+
+  config.before(:each) do
+    VideoFeedCache.clear if defined?(VideoFeedCache)
+  end
+  
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')
