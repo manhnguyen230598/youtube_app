@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../lib/apiClient";
 import { createConsumer } from "@rails/actioncable";
 import VideoCard from "../components/VideoCard";
 import { toast } from "react-toastify";
 import { getAccessToken, getCurrentUser } from "../lib/authStorage";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3000";
 const CABLE_URL = process.env.REACT_APP_CABLE_URL || "ws://localhost:3000/cable";
 
 export default function Home({ user }) {
@@ -13,7 +12,7 @@ export default function Home({ user }) {
 
     const fetchVideos = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/videos?per_page=20`);
+            const res = await apiClient.get("/videos?per_page=20");
             setVideos(Array.isArray(res.data) ? res.data : res.data.videos);
         } catch (err) {
             console.error("Failed to fetch videos", err);

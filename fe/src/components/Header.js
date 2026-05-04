@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import apiClient from "../lib/apiClient";
 import {
     setAuthTokens,
     setCurrentUser
@@ -13,12 +13,12 @@ export default function Header({ user, onLogout, setUser }) {
     const handleLogin = async () => {
         if (!email || !password) return alert("Vui lòng nhập đầy đủ thông tin");
         try {
-            const response = await axios.post("http://localhost:3000/login", {
+            const res = await apiClient.post("/login", {
                 email,
                 password
             });
 
-            const { access_token, refresh_token , user} = response.data;
+            const { access_token, refresh_token , user} = res.data;
 
             setAuthTokens({
                 accessToken: access_token,
@@ -38,7 +38,7 @@ export default function Header({ user, onLogout, setUser }) {
     const handleRegister = async () => {
         if (!email || !password) return alert("Vui lòng nhập đầy đủ thông tin");
         try {
-            await axios.post("http://localhost:3000/register", {
+            await apiClient.post("/register", {
                 email,
                 password
             });

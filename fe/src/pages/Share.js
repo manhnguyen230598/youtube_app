@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+import apiClient from "../lib/apiClient";
 import { getAccessToken } from "../lib/authStorage";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3000";
 
 export default function Share() {
     const [title, setTitle] = useState("");
@@ -24,15 +22,7 @@ export default function Share() {
         }
 
         try {
-            await axios.post(
-                `${API_BASE_URL}/videos`,
-                { title, url, description },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            await apiClient.post("/videos", { title, url, description });
 
             alert("Video shared successfully!");
             window.location = "/";

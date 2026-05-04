@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "./lib/apiClient";
 import Home from "./pages/Home";
 import Share from "./pages/Share";
 import Header from "./components/Header";
@@ -7,9 +7,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
     getAccessToken,
-    getRefreshToken,
     getCurrentUser,
-    setAuthTokens,
     setCurrentUser,
     clearAuthStorage
 } from "./lib/authStorage";
@@ -28,9 +26,7 @@ function App() {
 
             try {
                 // Gọi API /me để lấy dữ liệu thật từ database
-                const res = await axios.get("http://localhost:3000/me", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await apiClient.get("/me")
 
                 setUser(res.data.user);
                 setCurrentUser(res.data.user);
@@ -51,10 +47,7 @@ function App() {
         const token = getAccessToken();
         try {
             if (token) {
-                await axios.post("http://localhost:3000/logout",
-                    { current_logout: !allDevices },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                await apiClient.post("/logout", { current_logout: !allDevices });
             }
         } catch (e) {
             console.error("API Logout error", e);
