@@ -41,10 +41,13 @@ class AuthController < ApplicationController
   # REFRESH TOKEN
   def refresh
     token = params[:refresh_token]
-    stored_token = RefreshToken.find_by(token: token)
+    stored_token = RefreshToken.includes(:user).find_by(token: token)
 
     if stored_token && stored_token.expires_at > Time.current
       access_token = encode_access_token(stored_token.user_id)
+
+      # Lưu access token mới vào Redis để logout all devices vẫn quản lý được token này
+      $redis.sadd("user:#{stored_token.user_id}:tokens", access_token)
 
       render json: {
         access_token: access_token,
@@ -52,7 +55,7 @@ class AuthController < ApplicationController
           id: stored_token.user.id,
           email: stored_token.user.email
         }
-      }
+      }, status: :ok
     else
       render json: { error: "Invalid refresh token" }, status: :unauthorized
     end
