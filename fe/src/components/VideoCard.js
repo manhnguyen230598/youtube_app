@@ -1,4 +1,8 @@
+import { useState } from "react";
+
 export default function VideoCard({ video }) {
+    const [isPlaying, setIsPlaying] = useState(false);
+
     const getYoutubeId = (url) => {
         if (!url) return "";
 
@@ -18,19 +22,42 @@ export default function VideoCard({ video }) {
     };
 
     const youtubeId = getYoutubeId(video.url);
+    const thumbnailUrl = youtubeId
+        ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+        : "";
 
     return (
         <div style={styles.card}>
             <div style={styles.videoWrapper}>
-                {youtubeId ? (
+                {youtubeId && isPlaying ? (
                     <iframe
                         width="400"
                         height="250"
-                        src={`https://www.youtube.com/embed/${youtubeId}`}
+                        src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1`}
                         title={video.title}
                         frameBorder="0"
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
                         allowFullScreen
                     />
+                ) : youtubeId ? (
+                    <button
+                        type="button"
+                        style={styles.thumbnailButton}
+                        onClick={() => setIsPlaying(true)}
+                        aria-label={`Play ${video.title}`}
+                    >
+                        <img
+                            src={thumbnailUrl}
+                            alt={video.title}
+                            width="400"
+                            height="250"
+                            loading="lazy"
+                            style={styles.thumbnailImage}
+                        />
+                        <span style={styles.playButton}>▶</span>
+                    </button>
                 ) : (
                     <div style={styles.invalidVideo}>
                         Invalid YouTube URL
@@ -66,7 +93,39 @@ const styles = {
     },
     videoWrapper: {
         width: 400,
+        height: 250,
         flexShrink: 0
+    },
+    thumbnailButton: {
+        position: "relative",
+        width: 400,
+        height: 250,
+        padding: 0,
+        border: "none",
+        backgroundColor: "#000",
+        cursor: "pointer",
+        overflow: "hidden"
+    },
+    thumbnailImage: {
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        display: "block"
+    },
+    playButton: {
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: 72,
+        height: 52,
+        borderRadius: 12,
+        backgroundColor: "#ff0000",
+        color: "#fff",
+        fontSize: 30,
+        lineHeight: "52px",
+        textAlign: "center",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.35)"
     },
     info: {
         flex: 1,
