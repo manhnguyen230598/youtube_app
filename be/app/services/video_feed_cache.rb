@@ -6,7 +6,33 @@ class VideoFeedCache
   MAX_CACHED = 200
   TTL = 10.minutes
 
+  CACHEABLE_FIRST_PAGE_LIMITS = [10, 20, 50].freeze
+
   class << self
+    def first_page_json(limit:)
+      return nil unless cacheable_first_page_limit?(limit)
+
+      $redis.get(first_page_key(limit))
+    rescue StandardError => e
+      Rails.logger.warn("VideoFeedCache first_page_json failed: #{e.class}: #{e.message}")
+      nil
+    end
+
+    def write_first_page_json(limit:, json:)
+      return unless cacheable_first_page_limit?(limit)
+
+      $redis.set(first_page_key(limit), json, ex: TTL.to_i)
+    rescue StandardError => e
+      Rails.logger.warn("VideoFeedCache write_first_page_json failed: #{e.class}: #{e.message}")
+    end
+
+    def delete_first_page_json
+      keys = CACHEABLE_FIRST_PAGE_LIMITS.map { |limit| first_page_key(limit) }
+      $redis.del(*keys)
+    rescue StandardError => e
+      Rails.logger.warn("VideoFeedCache delete_first_page_json failed: #{e.class}: #{e.message}")
+    end
+
     def fetch(limit:, cursor: nil)
       rows = $redis.lrange(KEY, 0, MAX_CACHED - 1)
       return nil if rows.blank?
@@ -30,6 +56,7 @@ class VideoFeedCache
       end
 
       $redis.expire(KEY, TTL.to_i)
+      delete_first_page_json
     rescue StandardError => e
       Rails.logger.warn("VideoFeedCache write_collection failed: #{e.class}: #{e.message}")
     end
@@ -38,17 +65,27 @@ class VideoFeedCache
       $redis.lpush(KEY, JSON.generate(video))
       $redis.ltrim(KEY, 0, MAX_CACHED - 1)
       $redis.expire(KEY, TTL.to_i)
+      delete_first_page_json
     rescue StandardError => e
       Rails.logger.warn("VideoFeedCache prepend failed: #{e.class}: #{e.message}")
     end
 
     def clear
       $redis.del(KEY)
+      delete_first_page_json
     rescue StandardError => e
       Rails.logger.warn("VideoFeedCache clear failed: #{e.class}: #{e.message}")
     end
 
     private
+
+    def cacheable_first_page_limit?(limit)
+      CACHEABLE_FIRST_PAGE_LIMITS.include?(limit.to_i)
+    end
+
+    def first_page_key(limit)
+      "videos:latest:first_page:limit:#{limit.to_i}"
+    end
 
     def apply_cursor(videos, cursor)
       cursor_time = Time.iso8601(cursor[:created_at].to_s)

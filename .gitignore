@@ -6,6 +6,7 @@ be/tmp/*
 be/storage/*
 !be/storage/.keep
 be/config/master.key
+be/tmp/perf_tokens.json
 
 # Node
 fe/node_modules

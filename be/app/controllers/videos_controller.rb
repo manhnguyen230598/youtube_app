@@ -9,6 +9,16 @@ class VideosController < ApplicationController
     limit = 10 if limit < 1
     limit = 50 if limit > 50
 
+    if params[:cursor].blank?
+      cached_json = VideoFeedCache.first_page_json(limit: limit)
+
+      if cached_json.present?
+        response.set_header("X-Cache", "HIT")
+        render plain: cached_json, content_type: "application/json"
+        return
+      end
+    end
+
     cursor = decode_video_cursor(params[:cursor])
 
     if params[:cursor].present? && cursor.nil?
@@ -34,7 +44,7 @@ class VideosController < ApplicationController
 
     videos = rows.first(limit)
 
-    render json: {
+    response_payload = {
       videos: videos,
       meta: {
         limit: limit,
@@ -44,6 +54,15 @@ class VideosController < ApplicationController
         source: source
       }
     }
+
+    response_json = response_payload.to_json
+
+    if params[:cursor].blank?
+      VideoFeedCache.write_first_page_json(limit: limit, json: response_json)
+    end
+
+    response.set_header("X-Cache", "MISS")
+    render plain: response_json, content_type: "application/json"
   end
 
   def create
