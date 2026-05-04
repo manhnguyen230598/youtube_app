@@ -1,20 +1,20 @@
 require "json"
+require "time"
 
 class VideoFeedCache
-  KEY = "videos:latest:v1"
-  MAX_CACHED = 50
+  KEY = "videos:latest:v2"
+  MAX_CACHED = 200
   TTL = 10.minutes
 
   class << self
-    def fetch(page:, per_page:)
-      return nil unless page.to_i == 1
-
-      rows = $redis.lrange(KEY, 0, per_page.to_i - 1)
-
+    def fetch(limit:, cursor: nil)
+      rows = $redis.lrange(KEY, 0, MAX_CACHED - 1)
       return nil if rows.blank?
-      return nil if rows.length < per_page.to_i
 
-      rows.map { |row| JSON.parse(row) }
+      videos = rows.map { |row| JSON.parse(row) }
+      videos = apply_cursor(videos, cursor) if cursor.present?
+
+      videos.first(limit)
     rescue StandardError => e
       Rails.logger.warn("VideoFeedCache fetch failed: #{e.class}: #{e.message}")
       nil
@@ -46,6 +46,21 @@ class VideoFeedCache
       $redis.del(KEY)
     rescue StandardError => e
       Rails.logger.warn("VideoFeedCache clear failed: #{e.class}: #{e.message}")
+    end
+
+    private
+
+    def apply_cursor(videos, cursor)
+      cursor_time = Time.iso8601(cursor[:created_at].to_s)
+      cursor_id = cursor[:id].to_i
+
+      videos.select do |video|
+        video_time = Time.iso8601(video["created_at"].to_s)
+        video_id = video["id"].to_i
+
+        video_time < cursor_time ||
+          (video_time == cursor_time && video_id < cursor_id)
+      end
     end
   end
 end
