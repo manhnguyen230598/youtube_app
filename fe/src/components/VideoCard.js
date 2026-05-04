@@ -1,52 +1,21 @@
-import { useState } from "react";
+import {
+    getYoutubeId,
+    getYoutubeThumbnailUrl
+} from "../lib/youtube";
 
-export default function VideoCard({ video }) {
-    const [isPlaying, setIsPlaying] = useState(false);
-
-    const getYoutubeId = (url) => {
-        if (!url) return "";
-
-        const patterns = [
-            /youtube\.com\/watch\?v=([^&]+)/,
-            /youtu\.be\/([^?&]+)/,
-            /youtube\.com\/shorts\/([^?&]+)/,
-            /youtube\.com\/embed\/([^?&]+)/
-        ];
-
-        for (const pattern of patterns) {
-            const match = url.match(pattern);
-            if (match) return match[1];
-        }
-
-        return "";
-    };
-
+export default function VideoCard({ video, onOpen }) {
     const youtubeId = getYoutubeId(video.url);
-    const thumbnailUrl = youtubeId
-        ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
-        : "";
+    const thumbnailUrl = youtubeId ? getYoutubeThumbnailUrl(youtubeId) : "";
 
     return (
         <div style={styles.card}>
             <div style={styles.videoWrapper}>
-                {youtubeId && isPlaying ? (
-                    <iframe
-                        width="400"
-                        height="250"
-                        src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1`}
-                        title={video.title}
-                        frameBorder="0"
-                        loading="lazy"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        referrerPolicy="strict-origin-when-cross-origin"
-                        allowFullScreen
-                    />
-                ) : youtubeId ? (
+                {youtubeId ? (
                     <button
                         type="button"
                         style={styles.thumbnailButton}
-                        onClick={() => setIsPlaying(true)}
-                        aria-label={`Play ${video.title}`}
+                        onClick={() => onOpen(video)}
+                        aria-label={`Open ${video.title}`}
                     >
                         <img
                             src={thumbnailUrl}
@@ -56,6 +25,7 @@ export default function VideoCard({ video }) {
                             loading="lazy"
                             style={styles.thumbnailImage}
                         />
+
                         <span style={styles.playButton}>▶</span>
                     </button>
                 ) : (
@@ -104,7 +74,8 @@ const styles = {
         border: "none",
         backgroundColor: "#000",
         cursor: "pointer",
-        overflow: "hidden"
+        overflow: "hidden",
+        borderRadius: 8
     },
     thumbnailImage: {
         width: "100%",
@@ -158,6 +129,7 @@ const styles = {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: "1px solid #ccc"
+        border: "1px solid #ccc",
+        borderRadius: 8
     }
 };

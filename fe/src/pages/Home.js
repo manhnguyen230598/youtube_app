@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import apiClient from "../lib/apiClient";
 import VideoCard from "../components/VideoCard";
+import VideoModal from "../components/VideoModal";
 
 const FEED_LIMIT = 10;
 
@@ -9,6 +10,7 @@ export default function Home() {
     const [nextCursor, setNextCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [selectedVideoId, setSelectedVideoId] = useState(null);
 
     const loadingRef = useRef(false);
     const sentinelRef = useRef(null);
@@ -124,13 +126,42 @@ export default function Home() {
         };
     }, [loadMoreVideos]);
 
+
+    const selectedVideoIndex = videos.findIndex((video) => video.id === selectedVideoId);
+    const selectedVideo = selectedVideoIndex >= 0 ? videos[selectedVideoIndex] : null;
+
+    const openVideoModal = (video) => {
+        setSelectedVideoId(video.id);
+    };
+
+    const closeVideoModal = () => {
+        setSelectedVideoId(null);
+    };
+
+    const showPreviousVideo = () => {
+        if (selectedVideoIndex > 0) {
+            setSelectedVideoId(videos[selectedVideoIndex - 1].id);
+        }
+    };
+
+    const showNextVideo = () => {
+        if (selectedVideoIndex >= 0 && selectedVideoIndex < videos.length - 1) {
+            setSelectedVideoId(videos[selectedVideoIndex + 1].id);
+        }
+    };
+
     return (
+
         <div style={{ padding: 20 }}>
             <h2 style={{ textAlign: "center" }}>Shared YouTube Videos</h2>
 
             <div style={styles.grid}>
                 {videos.map((video) => (
-                    <VideoCard key={video.id} video={video} />
+                    <VideoCard
+                        key={video.id}
+                        video={video}
+                        onOpen={openVideoModal}
+                    />
                 ))}
             </div>
 
@@ -145,6 +176,16 @@ export default function Home() {
                     <p>No videos shared yet.</p>
                 )}
             </div>
+            {selectedVideo && (
+                <VideoModal
+                    video={selectedVideo}
+                    onClose={closeVideoModal}
+                    onPrevious={showPreviousVideo}
+                    onNext={showNextVideo}
+                    hasPrevious={selectedVideoIndex > 0}
+                    hasNext={selectedVideoIndex < videos.length - 1}
+                />
+            )}
         </div>
     );
 }
