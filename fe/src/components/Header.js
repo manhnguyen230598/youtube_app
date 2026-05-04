@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+import {
+    setAuthTokens,
+    setCurrentUser
+} from "../lib/authStorage";
 
 export default function Header({ user, onLogout, setUser }) {
     const [email, setEmail] = useState("");
@@ -16,10 +20,12 @@ export default function Header({ user, onLogout, setUser }) {
 
             const { access_token, refresh_token , user} = response.data;
 
-            localStorage.setItem("token", access_token);
-            localStorage.setItem("refresh_token", refresh_token);
-            localStorage.setItem("user", JSON.stringify(user));
+            setAuthTokens({
+                accessToken: access_token,
+                refreshToken: refresh_token
+            });
 
+            setCurrentUser(user);
             setUser(user);
             alert("Đăng nhập thành công!");
         } catch (error) {

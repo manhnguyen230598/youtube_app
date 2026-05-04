@@ -3,6 +3,7 @@ import axios from "axios";
 import { createConsumer } from "@rails/actioncable";
 import VideoCard from "../components/VideoCard";
 import { toast } from "react-toastify";
+import { getAccessToken, getCurrentUser } from "../lib/authStorage";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3000";
 const CABLE_URL = process.env.REACT_APP_CABLE_URL || "ws://localhost:3000/cable";
@@ -24,7 +25,7 @@ export default function Home({ user }) {
     }, []);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = getAccessToken();
 
         if (!token || !user) {
             return;
@@ -42,7 +43,7 @@ export default function Home({ user }) {
             },
 
             received(data) {
-                const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+                const currentUser = getCurrentUser();
 
                 if (currentUser && data.shared_by_id === currentUser.id) {
                     fetchVideos();

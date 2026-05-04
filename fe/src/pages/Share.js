@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { getAccessToken } from "../lib/authStorage";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3000";
 
@@ -9,7 +10,7 @@ export default function Share() {
     const [description, setDescription] = useState("");
 
     const handleSubmit = async () => {
-        const token = localStorage.getItem("token");
+        const token = getAccessToken();
 
         if (!token) {
             alert("Please login before sharing a video.");

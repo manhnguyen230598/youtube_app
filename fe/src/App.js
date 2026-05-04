@@ -5,20 +5,25 @@ import Share from "./pages/Share";
 import Header from "./components/Header";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import {
+    getAccessToken,
+    getRefreshToken,
+    getCurrentUser,
+    setAuthTokens,
+    setCurrentUser,
+    clearAuthStorage
+} from "./lib/authStorage";
 
 function App() {
-    // 1. Khởi tạo từ LocalStorage để hiện email ngay lập tức (nếu có)
-    const [user, setUser] = useState(() => {
-        const savedEmail = localStorage.getItem("user_email");
-        return savedEmail ? { email: savedEmail } : null;
-    });
+
+    const [user, setUser] = useState(() => getCurrentUser());
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
 
     useEffect(() => {
         const verifyUser = async () => {
-            const token = localStorage.getItem("token");
+            const token = getAccessToken();
             if (!token) return;
 
             try {
@@ -28,11 +33,11 @@ function App() {
                 });
 
                 setUser(res.data.user);
-                localStorage.setItem("user_email", res.data.user.email);
+                setCurrentUser(res.data.user);
             } catch (error) {
                 console.error("Token invalid or expired");
                 // Nếu token hết hạn hoặc fake, xóa sạch session
-                localStorage.clear();
+                clearAuthStorage();
                 setUser(null);
             }
         };
@@ -43,7 +48,7 @@ function App() {
     const onLogoutRequested = () => setShowLogoutConfirm(true);
 
     const handleLogoutAction = async (allDevices) => {
-        const token = localStorage.getItem("token");
+        const token = getAccessToken();
         try {
             if (token) {
                 await axios.post("http://localhost:3000/logout",
@@ -54,7 +59,7 @@ function App() {
         } catch (e) {
             console.error("API Logout error", e);
         } finally {
-            localStorage.clear();
+            clearAuthStorage();
             setUser(null);
             setShowLogoutConfirm(false);
             window.location = "/";
