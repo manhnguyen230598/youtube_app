@@ -9,21 +9,37 @@ class VideosController < ApplicationController
     per_page = 20 if per_page < 1
     per_page = 50 if per_page > 50
 
-    videos = Video
-               .includes(:user)
-               .order(created_at: :desc)
-               .limit(per_page)
-               .offset((page - 1) * per_page)
+    rows = Video
+             .joins(:user)
+             .order(created_at: :desc, id: :desc)
+             .limit(per_page)
+             .offset((page - 1) * per_page)
+             .pluck(
+               "videos.id",
+               "videos.title",
+               "videos.url",
+               "videos.description",
+               "videos.created_at",
+               "users.id",
+               "users.email"
+             )
+
+    videos = rows.map do |row|
+      {
+        id: row[0],
+        title: row[1],
+        url: row[2],
+        description: row[3],
+        created_at: row[4],
+        user: {
+          id: row[5],
+          email: row[6]
+        }
+      }
+    end
 
     render json: {
-      videos: videos.as_json(
-        only: [:id, :title, :url, :description, :created_at],
-        include: {
-          user: {
-            only: [:id, :email]
-          }
-        }
-      ),
+      videos: videos,
       meta: {
         page: page,
         per_page: per_page
@@ -39,7 +55,17 @@ class VideosController < ApplicationController
 
       render json: {
         message: "Video shared successfully",
-        video: video.as_json(include: { user: { only: [:id, :email] } })
+        video: {
+          id: video.id,
+          title: video.title,
+          url: video.url,
+          description: video.description,
+          created_at: video.created_at,
+          user: {
+            id: current_user.id,
+            email: current_user.email
+          }
+        }
       }, status: :created
     else
       render json: { errors: video.errors.full_messages }, status: :unprocessable_entity
