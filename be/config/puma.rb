@@ -16,7 +16,7 @@ workers workers_count if workers_count > 1
 
 preload_app! if workers_count > 1
 
-on_worker_boot do
+before_worker_boot do
   ActiveRecord::Base.establish_connection if defined?(ActiveRecord)
 end
 

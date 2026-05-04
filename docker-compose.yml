@@ -48,7 +48,7 @@ services:
 
   worker:
     build: ./be
-    command: bash -c "bundle exec sidekiq -q default -c 3"
+    command: bash -c "bundle exec sidekiq -q default -c 1"
     volumes:
       - ./be:/app
       - bundle_data:/usr/local/bundle
@@ -62,8 +62,8 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: password
       REDIS_URL: redis://redis:6379/0
-      RAILS_MAX_THREADS: 5
-      DATABASE_POOL: 5
+      RAILS_MAX_THREADS: 3
+      DATABASE_POOL: 3
       RAILS_LOG_LEVEL: warn
 
   frontend:
