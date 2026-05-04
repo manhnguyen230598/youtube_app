@@ -1,67 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import apiClient from "../lib/apiClient";
-import { createConsumer } from "@rails/actioncable";
 import VideoCard from "../components/VideoCard";
-import { toast } from "react-toastify";
-import { getAccessToken, getCurrentUser } from "../lib/authStorage";
 
-const CABLE_URL = process.env.REACT_APP_CABLE_URL || "ws://localhost:3000/cable";
-
-export default function Home({ user }) {
+export default function Home() {
     const [videos, setVideos] = useState([]);
 
-    const fetchVideos = async () => {
+    const fetchVideos = useCallback(async () => {
         try {
             const res = await apiClient.get("/videos?per_page=20");
             setVideos(Array.isArray(res.data) ? res.data : res.data.videos);
         } catch (err) {
             console.error("Failed to fetch videos", err);
         }
-    };
-
-    useEffect(() => {
-        fetchVideos();
     }, []);
 
     useEffect(() => {
-        const token = getAccessToken();
+        fetchVideos();
+    }, [fetchVideos]);
 
-        if (!token || !user) {
-            return;
-        }
+    useEffect(() => {
+        const handleVideoShared = () => {
+            fetchVideos();
+        };
 
-        const cable = createConsumer(`${CABLE_URL}?token=${encodeURIComponent(token)}`);
-
-        const subscription = cable.subscriptions.create("NotificationsChannel", {
-            connected() {
-                console.log("Connected to NotificationsChannel");
-            },
-
-            disconnected() {
-                console.log("Disconnected from NotificationsChannel");
-            },
-
-            received(data) {
-                const currentUser = getCurrentUser();
-
-                if (currentUser && data.shared_by_id === currentUser.id) {
-                    fetchVideos();
-                    return;
-                }
-
-                toast.info(`${data.shared_by_email} shared: ${data.title}`, {
-                    icon: "🚀"
-                });
-
-                fetchVideos();
-            }
-        });
+        window.addEventListener("video:shared", handleVideoShared);
 
         return () => {
-            subscription.unsubscribe();
-            cable.disconnect();
+            window.removeEventListener("video:shared", handleVideoShared);
         };
-    }, [user]);
+    }, [fetchVideos]);
 
     return (
         <div style={{ padding: 20 }}>

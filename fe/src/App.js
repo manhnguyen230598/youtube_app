@@ -5,6 +5,8 @@ import Share from "./pages/Share";
 import Header from "./components/Header";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { disconnectCable } from "./lib/actionCableClient";
+import NotificationSubscriber from "./components/NotificationSubscriber";
 import {
     getAccessToken,
     getCurrentUser,
@@ -52,6 +54,7 @@ function App() {
         } catch (e) {
             console.error("API Logout error", e);
         } finally {
+            disconnectCable();
             clearAuthStorage();
             setUser(null);
             setShowLogoutConfirm(false);
@@ -66,6 +69,8 @@ function App() {
             <Header user={user} onLogout={onLogoutRequested} setUser={setUser} />
 
             <ToastContainer position="top-right" autoClose={5000} />
+
+            <NotificationSubscriber user={user} />
 
             {showLogoutConfirm && (
                 <div style={modalStyles.overlay}>
