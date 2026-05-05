@@ -2,6 +2,21 @@
 
 A full-stack web app for sharing YouTube videos. Users can register, log in, share YouTube links, view the latest shared videos, and receive real-time notifications when another user shares a new video.
 
+
+## CI/CD Workflow
+
+Push code lên `master` sẽ tự động trigger GitHub Actions.
+
+### Flow hiện tại:
+
+```txt
+GitHub Push
+  -> Run RSpec với PostgreSQL + Redis test services
+  -> Nếu test pass, SSH vào VPS
+  -> Pull code mới, build frontend, rebuild Docker Compose production
+  -> Smoke test `/up` và `/videos`
+```
+
 ## Demo Scope
 
 Implemented requirements:
