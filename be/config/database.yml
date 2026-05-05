@@ -15,7 +15,18 @@ test:
   database: youtube_app_test
 
 production:
-  <<: *default
-  database: youtube_app_production
-  username: postgres
-  password: password
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("DATABASE_NAME", "youtube_app_production") %>
+
+  queue:
+    <<: *default
+    database: <%= ENV.fetch("DATABASE_NAME", "youtube_app_production") %>
+
+  cache:
+    <<: *default
+    database: <%= ENV.fetch("DATABASE_NAME", "youtube_app_production") %>
+
+  cable:
+    <<: *default
+    database: <%= ENV.fetch("DATABASE_NAME", "youtube_app_production") %>
