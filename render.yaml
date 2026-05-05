@@ -84,6 +84,7 @@ services:
 
   - type: keyvalue
     name: youtube-video-redis
+    ipAllowList: []
     maxmemoryPolicy: noeviction
 
 databases:
