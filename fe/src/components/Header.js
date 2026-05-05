@@ -4,6 +4,7 @@ import {
     setAuthTokens,
     setCurrentUser
 } from "../lib/authStorage";
+import { toast } from "react-toastify";
 
 export default function Header({ user, onLogout, setUser }) {
     const [email, setEmail] = useState("");
@@ -11,7 +12,10 @@ export default function Header({ user, onLogout, setUser }) {
 
     // Hàm xử lý Đăng nhập
     const handleLogin = async () => {
-        if (!email || !password) return alert("Vui lòng nhập đầy đủ thông tin");
+        if (!email || !password) {
+            toast.warn("Vui lòng nhập đầy đủ thông tin");
+            return;
+        }
         try {
             const res = await apiClient.post("/login", {
                 email,
@@ -27,25 +31,27 @@ export default function Header({ user, onLogout, setUser }) {
 
             setCurrentUser(user);
             setUser(user);
-            alert("Đăng nhập thành công!");
+            toast.success("Đăng nhập thành công!");
         } catch (error) {
-            const errorMsg = error.response?.data?.error || "Sai email hoặc mật khẩu";
-            alert("Lỗi đăng nhập: " + errorMsg);
+            toast.error(error.response?.data?.error || "Sai email hoặc mật khẩu");
         }
     };
 
     // Hàm xử lý Đăng ký
     const handleRegister = async () => {
-        if (!email || !password) return alert("Vui lòng nhập đầy đủ thông tin");
+        if (!email || !password) {
+            toast.warn("Vui lòng nhập đầy đủ thông tin");
+            return;
+        }
         try {
             await apiClient.post("/register", {
                 email,
                 password
             });
-            alert("Đăng ký thành công! Giờ bạn có thể đăng nhập.");
+            toast.success("Đăng ký thành công! Giờ bạn có thể đăng nhập.");
         } catch (error) {
             const errors = error.response?.data?.errors;
-            alert("Lỗi đăng ký: " + (errors ? errors.join(", ") : "Email đã tồn tại"));
+            toast.error(`Lỗi đăng ký: ${errors ? errors.join(", ") : "Email đã tồn tại"}`);
         }
     };
 

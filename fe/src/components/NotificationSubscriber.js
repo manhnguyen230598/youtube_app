@@ -35,9 +35,32 @@ export default function NotificationSubscriber({ user }) {
                     return;
                 }
 
-                toast.info(`${data.shared_by_email} shared: ${data.title}`, {
-                    icon: "🚀"
-                });
+                toast.info(
+                    <div style={{ lineHeight: 1.4 }}>
+                        <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                            Có video mới được chia sẻ
+                        </div>
+
+                        <div style={{ fontSize: 14 }}>
+                            <strong>{data.shared_by_email}</strong>
+                        </div>
+
+                        <div
+                            style={{
+                                fontSize: 13,
+                                color: "#555",
+                                marginTop: 4,
+                                wordBreak: "break-word"
+                            }}
+                        >
+                            {data.title}
+                        </div>
+                    </div>,
+                    {
+                        icon: "🚀",
+                        autoClose: 6000
+                    }
+                );
             }
         });
 

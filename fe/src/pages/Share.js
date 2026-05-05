@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import apiClient from "../lib/apiClient";
 import { getAccessToken } from "../lib/authStorage";
+import { toast } from "react-toastify";
 
 export default function Share() {
     const [title, setTitle] = useState("");
@@ -11,24 +12,24 @@ export default function Share() {
         const token = getAccessToken();
 
         if (!token) {
-            alert("Please login before sharing a video.");
+            toast.warn("Vui lòng đăng nhập trước khi chia sẻ video.");
             window.location = "/";
             return;
         }
 
         if (!title || !url) {
-            alert("Please enter both title and YouTube URL.");
+            toast.warn("Please enter both title and YouTube URL.");
             return;
         }
 
         try {
             await apiClient.post("/videos", { title, url, description });
 
-            alert("Video shared successfully!");
+            toast.success("Chia sẻ video thành công!");
             window.location = "/";
         } catch (error) {
             const errors = error.response?.data?.errors;
-            alert("Share failed: " + (errors ? errors.join(", ") : "Unknown error"));
+            toast.error(`Chia sẻ thất bại: ${errors ? errors.join(", ") : "Unknown error"}`);
         }
     };
 
