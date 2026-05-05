@@ -54,7 +54,7 @@ jobs:
           working-directory: be
 
       - name: Prepare test database
-        run: bin/rails db:prepare
+        run: bundle exec rails db:prepare
 
       - name: Run RSpec
         run: bundle exec rspec
