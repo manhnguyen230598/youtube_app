@@ -96,7 +96,8 @@ Rails.application.configure do
   config.action_cable.url = ENV.fetch("ACTION_CABLE_URL")
   config.action_cable.allowed_request_origins = [
     ENV.fetch("FRONTEND_URL"),
-    /https:\/\/.*\.onrender\.com/
+    /https:\/\/.*\.pages\.dev/,
+    /https:\/\/.*\.fly\.dev/
   ]
 
   config.hosts.clear
