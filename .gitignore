@@ -8,6 +8,9 @@ be/storage/*
 be/config/master.key
 be/tmp/perf_tokens.json
 
+.env.production
+fe/.env.production
+
 # Node
 fe/node_modules
 fe/build
