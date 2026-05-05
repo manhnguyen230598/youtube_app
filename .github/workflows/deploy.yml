@@ -82,8 +82,8 @@ jobs:
 
             echo "Create frontend production env"
             cat > fe/.env.production <<'EOF'
-            REACT_APP_API_BASE_URL=http://45.77.169.187
-            REACT_APP_CABLE_URL=ws://45.77.169.187/cable
+            REACT_APP_API_BASE_URL=https://mdzhub.space
+            REACT_APP_CABLE_URL=wss://mdzhub.space/cable
             EOF
 
             echo "Build frontend"
