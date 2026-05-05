@@ -1,0 +1,43 @@
+:80 {
+  handle /up {
+    reverse_proxy backend:3000
+  }
+
+  handle /videos* {
+    reverse_proxy backend:3000
+  }
+
+  handle /register {
+    reverse_proxy backend:3000
+  }
+
+  handle /login {
+    reverse_proxy backend:3000
+  }
+
+  handle /refresh {
+    reverse_proxy backend:3000
+  }
+
+  handle /logout {
+    reverse_proxy backend:3000
+  }
+
+  handle /me {
+    reverse_proxy backend:3000
+  }
+
+  handle /users* {
+    reverse_proxy backend:3000
+  }
+
+  handle /cable {
+    reverse_proxy backend:3000
+  }
+
+  handle {
+    root * /srv/frontend
+    try_files {path} /index.html
+    file_server
+  }
+}
