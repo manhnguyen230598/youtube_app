@@ -1,0 +1,109 @@
+name: CI/CD Production
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  backend-test:
+    name: Run RSpec
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: youtube_app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    defaults:
+      run:
+        working-directory: be
+
+    env:
+      RAILS_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: youtube_app_test
+      REDIS_URL: redis://localhost:6379/1
+      LOAD_TEST: "0"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.0
+          bundler-cache: true
+          working-directory: be
+
+      - name: Prepare test database
+        run: bin/rails db:prepare
+
+      - name: Run RSpec
+        run: bundle exec rspec
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: backend-test
+
+    steps:
+      - name: Deploy production via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -e
+
+            cd /var/www/youtube_app
+
+            echo "Pull latest code"
+            git fetch origin master
+            git reset --hard origin/master
+
+            echo "Create frontend production env"
+            cat > fe/.env.production <<'EOF'
+            REACT_APP_API_BASE_URL=http://45.77.169.187
+            REACT_APP_CABLE_URL=ws://45.77.169.187/cable
+            EOF
+
+            echo "Build frontend"
+            cd fe
+            npm ci || npm install
+            npm run build
+            cd ..
+
+            echo "Build and restart production containers"
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+
+            echo "Wait for services"
+            sleep 15
+
+            echo "Container status"
+            docker compose --env-file .env.production -f docker-compose.prod.yml ps
+
+            echo "Smoke test"
+            curl --max-time 15 -f http://45.77.169.187/up
+            curl --max-time 15 -f "http://45.77.169.187/videos?limit=10"
+
+            echo "Cleanup old docker images"
+            docker image prune -f
