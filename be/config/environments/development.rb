@@ -85,4 +85,18 @@ Rails.application.configure do
 
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug").downcase.to_sym
   config.active_record.verbose_query_logs = false if ENV["RAILS_LOG_LEVEL"] == "warn"
+
+  if ENV["LOAD_TEST"] == "1"
+    config.enable_reloading = false
+    config.eager_load = true
+    config.consider_all_requests_local = false
+
+    config.action_controller.perform_caching = true
+    config.log_level = :warn
+
+    config.active_record.verbose_query_logs = false
+    config.active_job.verbose_enqueue_logs = false
+
+    config.server_timing = false if config.respond_to?(:server_timing=)
+  end
 end

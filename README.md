@@ -112,57 +112,136 @@ docker compose run --rm -e RAILS_ENV=test backend rails db:drop db:create db:sch
 Backend RSpec tests:
 
 ```bash
-docker compose run --rm backend bundle exec rspec
+docker compose run --rm -e RAILS_ENV=test -e LOAD_TEST=0 -e REDIS_URL=redis://redis:6379/1 backend bash -lc "bin/rails db:prepare && bundle exec rspec"
 ```
 
 Run specific test groups:
 
 ```bash
-docker compose run --rm backend bundle exec rspec spec/models
-docker compose run --rm backend bundle exec rspec spec/requests
-docker compose run --rm backend bundle exec rspec spec/jobs
-docker compose run --rm backend bundle exec rspec spec/channels
+docker compose run --rm -e RAILS_ENV=test -e LOAD_TEST=0 backend bundle exec rspec spec/models
+docker compose run --rm -e RAILS_ENV=test -e LOAD_TEST=0 backend bundle exec rspec spec/requests
+docker compose run --rm -e RAILS_ENV=test -e LOAD_TEST=0 backend bundle exec rspec spec/jobs
+docker compose run --rm -e RAILS_ENV=test -e LOAD_TEST=0 backend bundle exec rspec spec/channels
 ```
+
+> Do not run request specs with the default development environment from `docker-compose.yml`. Use `RAILS_ENV=test` to avoid development host protection and load-test settings affecting the test suite.
 
 ## Load / Stress Test
 
-The project includes k6 tests under:
+The k6 scripts live under:
 
 ```txt
 tests/load/
 ```
 
-Run the main flow stress test:
+For local API benchmark, stop the frontend first to remove WebSocket noise:
 
 ```bash
-docker run --rm --network youtube_app_default \
-  -e API_BASE_URL=http://backend:3000 \
-  -e RUN_ID=local_run_001 \
-  -v "$PWD/tests/load:/scripts" \
-  grafana/k6 run /scripts/youtube_app_main_flow_stress_test.js
+docker compose stop frontend
 ```
 
-PowerShell version:
+### Feed API: `GET /videos`
 
-```powershell
-docker run --rm --network youtube_app_default `
-  -e API_BASE_URL=http://backend:3000 `
-  -e RUN_ID=local_run_001 `
-  -v "$((Get-Location).Path)\tests\load:/scripts" `
-  grafana/k6 run /scripts/youtube_app_main_flow_stress_test.js
+Run from the host machine:
+
+```bash
+k6 run -e API_BASE_URL=http://localhost:3000 -e RATE=50 -e DURATION=1m tests/load/select_feed_rps_test.js
+k6 run -e API_BASE_URL=http://localhost:3000 -e RATE=100 -e DURATION=1m tests/load/select_feed_rps_test.js
+k6 run -e API_BASE_URL=http://localhost:3000 -e RATE=125 -e DURATION=1m tests/load/select_feed_rps_test.js
 ```
 
-Save a report:
+PowerShell is the same command:
 
 ```powershell
-New-Item -ItemType Directory -Force reports\load
+k6 run -e API_BASE_URL=http://localhost:3000 -e RATE=100 -e DURATION=1m tests/load/select_feed_rps_test.js
+```
 
-docker run --rm --network youtube_app_default `
-  -e API_BASE_URL=http://backend:3000 `
-  -e RUN_ID=report_001 `
-  -v "$((Get-Location).Path)\tests\load:/scripts" `
-  grafana/k6 run /scripts/youtube_app_main_flow_stress_test.js `
-  | Tee-Object -FilePath reports\load\k6-main-flow-after-redis-cache.txt
+### Share API: `POST /videos`
+
+Export performance tokens first:
+
+```bash
+docker compose exec -e USER_COUNT=10000 -e TOKEN_EXPIRES_IN_SECONDS=28800 backend bin/rails runner script/perf_export_tokens.rb
+```
+
+Run a small write-load test first:
+
+```bash
+k6 run -e API_BASE_URL=http://localhost:3000 -e RATE=5 -e DURATION=1m -e TOKEN_FILE=./be/tmp/perf_tokens.json tests/load/share_video_rps_test.js
+```
+
+Increase slowly:
+
+```txt
+5 RPS -> 10 RPS -> 20 RPS -> 30 RPS -> 50 RPS
+```
+
+### Seed benchmark data
+
+Target dataset:
+
+```txt
+10,000 users
+1,000,000 videos
+```
+
+Seed data:
+
+```bash
+docker compose exec -e USER_COUNT=10000 -e VIDEO_COUNT=1000000 -e BATCH_SIZE=10000 -e PERF_PASSWORD=password123 backend bin/rails runner script/perf_seed.rb
+```
+
+Update database statistics:
+
+```bash
+docker compose exec db psql -U postgres -d youtube_app_development -c "ANALYZE videos;"
+docker compose exec db psql -U postgres -d youtube_app_development -c "ANALYZE users;"
+```
+
+Check data count:
+
+```bash
+docker compose exec backend bin/rails runner "puts({users: User.count, videos: Video.count}.to_json)"
+```
+
+### Current local benchmark
+
+This benchmark intentionally uses the existing `docker-compose.yml`. Results depend on the local machine, Docker Desktop resources, CPU, RAM, and whether other apps are running.
+
+| Endpoint | Load | Result | Notes |
+|---|---:|---|---|
+| `GET /videos?limit=10` | 50 RPS | PASS | Stable, p95 around 60ms in local run |
+| `GET /videos?limit=10` | 100 RPS | PASS | Current safe local baseline |
+| `GET /videos?limit=10` | 125 RPS | FAIL | Latency and dropped iterations appeared |
+| `GET /videos?limit=10` | 300 RPS | TARGET | Next target after optimization or on stronger hardware |
+
+A load level is considered stable only when all conditions are true:
+
+```txt
+checks = 100%
+http_req_failed = 0%
+dropped_iterations = 0
+p95 < 500ms
+```
+
+### Monitor while testing
+
+```bash
+docker stats
+docker compose logs -f backend
+docker compose logs -f worker
+```
+
+Sidekiq queue:
+
+```bash
+docker compose exec backend bin/rails runner "require 'sidekiq/api'; q=Sidekiq::Queue.new('default'); puts({size: q.size, latency: q.latency}.to_json)"
+```
+
+Database connections:
+
+```bash
+docker compose exec db psql -U postgres -d youtube_app_development -c "SELECT count(*) FROM pg_stat_activity;"
 ```
 
 ## Performance Optimization Summary
