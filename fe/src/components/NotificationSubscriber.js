@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import { getCable } from "../lib/actionCableClient";
-import { getCurrentUser } from "../lib/authStorage";
+import { getAccessToken, getCurrentUser } from "../lib/authStorage";
 
 export default function NotificationSubscriber({ user }) {
     useEffect(() => {
-        if (!user) return;
+        const token = getAccessToken();
+
+        if (!user || !token) return;
 
         const cable = getCable();
 
@@ -42,7 +44,7 @@ export default function NotificationSubscriber({ user }) {
         return () => {
             subscription.unsubscribe();
         };
-    }, [user]);
+    }, [user?.id]);
 
     return null;
 }
